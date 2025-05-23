@@ -1,32 +1,36 @@
 import requests
-import json
-import pprint
+from pprint import pprint
+
+def fetch_rolimons_data():
+    url = "https://www.rolimons.com/itemapi/itemdetails"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(url, headers=headers)
+    return response.json()
+
+def parse_item(item_id, item_data):
+    """Parse the item array into a structured dictionary"""
+    return {
+        "id": item_id,
+        "name": item_data[0],
+        "short_name": item_data[1] if item_data[1] else None,
+        "rap": item_data[2] if item_data[2] != -1 else None,
+        "value": item_data[3] if item_data[3] != -1 else None,
+        "demand": item_data[6] if item_data[6] != -1 else None,
+        "trend": item_data[7] if item_data[7] != -1 else None,
+        "projected": item_data[8] if item_data[8] != -1 else None,
+        "hyped": item_data[9] if item_data[9] != -1 else None,
+        "rare": item_data[10] if len(item_data) > 10 and item_data[10] != -1 else None
+    }
 
 
-url = "https://www.rolimons.com/itemapi/itemdetails"
 
-response = requests.get(url)
+# Main execution
+data = fetch_rolimons_data()
+items_dict = data.get("items", {})
 
-if response.status_code == 200:
-    data = json.loads(response.text)
+# Parse all items
+parsed_items = [parse_item(item_id, item_data) 
+               for item_id, item_data in items_dict.items()]
 
-    items_dict = data
-
-    for i, (item_id, item_data) in enumerate(items_dict.items()):
-        if i >= 5:  # Only show first 5 for demo
-            break
-            
-        # Parse the array according to your structure
-        name = item_data[0] if len(item_data) > 0 else "N/A"
-        short_name = item_data[1] if len(item_data) > 1 else "N/A"
-        rap = item_data[2] if len(item_data) > 2 else -1
-        value = item_data[3] if len(item_data) > 3 else -1
-        demand = item_data[6] if len(item_data) > 6 else -1
-        
-        print(f"\nItem ID: {item_id}")
-        print(f"Name: {name} ({short_name})")
-        print(f"RAP: {rap if rap != -1 else 'N/A'}")
-        print(f"Value: {value if value != -1 else 'N/A'}")
-        print(f"Demand: {demand if demand != -1 else 'N/A'}")
-else:
-    print(f"Error: {response.status_code}")
+# Display results
+print(f"Total items: {len(parsed_items)}")
